@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toolpulse"
+version = "0.1.0"
+description = "Host-agnostic trajectory-aware middleware for coding agents (ToolFamiliar reference reimplementation)"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+dependencies = ["numpy", "scikit-sequitur", "pyyaml"]
+
+[project.optional-dependencies]
+llm = ["openai"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+toolpulse = ["py.typed", "resources/*.yaml"]
+
+[tool.pytest.ini_options]
+# Resolve our test helpers instead of an optional host's own "tests" package.
+# Do not add src here: tests can also exercise a separately installed wheel.
+pythonpath = ["."]

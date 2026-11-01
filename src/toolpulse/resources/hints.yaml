@@ -1,0 +1,134 @@
+hint_sets:
+  sequitur_default:
+    duplicate_action:
+      empty: >-
+        I notice an empty action was produced twice in a row. Make sure the next response contains an executable action.
+      normal: >-
+        I notice the exact same action was used twice in a row: {tool} {args}. Read the latest observation carefully before casting that spell again.
+    failed_action: >-
+      I sense a `{error_type}` error from the previous `{tool}` action. Before your next move, think through what caused the error.
+    loop_action: >-
+      I sense a repeating rhythm, seen {repeat_times} times: {pattern_text}. This may be a loop; you may consider breaking the pattern with a different strategy.
+    macro_candidate: >-
+      I keep seeing this tool sequence return: {pattern_text}. If it is truly a stable workflow, consider shaping it into a custom tool such as `{suggested_name}`.
+
+  matrix_profile_default:
+    duplicate_action:
+      empty: >-
+        I notice an empty action was produced twice in a row. Make sure the next response contains an executable action.
+      normal: >-
+        I notice the exact same action was used twice in a row: {tool} {args}. Read the latest observation carefully before casting that spell again.
+    failed_action: >-
+      I sense a `{error_type}` error from the previous `{tool}` action. Before your next move, think through what caused the error.
+    loop_action: >-
+      I notice {repeat_times} consecutive windows with approximately similar behavior. A representative tool pattern is: {pattern_text}. The actions are not necessarily identical, but this may indicate repeated investigation, editing, or validation without enough progress. Review the latest results and consider a materially different next step.
+    macro_candidate:
+      template: >-
+        I notice {workflow_text} recurring around this representative pattern: {pattern_text}. The individual actions and arguments may differ, so first verify that the workflow is stable and reusable. If it is, consider a custom tool such as `{suggested_name}`.
+      default_workflow_text: approximately similar workflows
+      workflow_kinds:
+        edit_or_validation: similar edit-and-validation workflows
+        stable_specific_query: similar targeted search-and-read workflows
+  
+  remind_only:
+    duplicate_action:
+      empty: |-
+        Tool-use notice: You invoked an empty action consecutively for 3 times.
+      normal: |-
+        Tool-use notice: You called {tool} with exactly the same arguments in 3 consecutive steps.
+    failed_action: |-
+      Tool-use notice: You received {error_type} error again from {tool} without taking an effective recovery action after the previous error.
+    loop_action: |-
+      Tool-use notice: You repeated the action pattern {pattern_text} for {repeat_times} times.
+    stalled_action: |-
+      Tool-use notice: You took highly similar tool-use behavior across consecutive steps, each spanning {production} interactions.
+    blind_action: |-
+      Tool-use notice: You tried to edit {path} using {tool} before inspecting the file in the current task.
+  
+  remind_and_guide:
+    duplicate_action:
+      empty: |-
+        Tool-use notice: You invoked an empty action consecutively for 3 times.
+        Guidance: Examine the previous result before retrying, and make a materially different call only when new evidence justifies it.
+      normal: |-
+        Tool-use notice: You called {tool} with exactly the same arguments in 3 consecutive steps.
+        Guidance: Examine the previous result before retrying, and make a materially different call only when new evidence justifies it.
+    failed_action: |-
+      Tool-use notice: You received {error_type} error again from {tool} without taking an effective recovery action after the previous error.
+      Guidance: Determine whether this error reflects an actual failure or an expected outcome of the current action. If it is an actual failure, examine its cause and address any unmet preconditions before proceeding.
+    loop_action: |-
+      Tool-use notice: You repeated the action pattern {pattern_text} for {repeat_times} times.
+      Guidance: Consider whether this repetition is still contributing to progress. If not, reconsider the current tool-use strategy.
+    stalled_action: |-
+      Tool-use notice: You took highly similar tool-use behavior across consecutive steps, each spanning {production} interactions.
+      Guidance: Assess whether your current work has stalled or delivered only limited progress on the task. If it is, revise your strategy if progress is insufficient.
+    blind_action: |-
+      Tool-use notice: You tried to edit {path} using {tool} before inspecting the file in the current task.
+      Guidance: Inspect the target file and its relevant context before making an edit grounded in the observed content.
+  
+  different_message_type:
+    duplicate_action:
+      empty: |-
+        Tool-use notice: You invoked an empty action consecutively for 3 times.
+      normal: |-
+        Tool-use notice: You called {tool} with exactly the same arguments in 3 consecutive steps.
+    failed_action: |-
+      Tool-use notice: You received {error_type} error again from {tool} without taking an effective recovery action after the previous error.
+    loop_action: |-
+      Tool-use notice: You repeated the action pattern {pattern_text} for {repeat_times} times.
+    stalled_action: |-
+      Tool-use notice: You took highly similar tool-use behavior across consecutive steps, each spanning {production} interactions.
+    blind_action: |-
+      Tool-use notice: You tried to edit {path} using {tool} before inspecting the file in the current task.
+
+  llm_coach:
+    type: llm
+
+    master_template: |-
+      You are an experienced software developer. Help examine the current progress and recent tool interactions. When a potentially problematic tool-use behavior is observed, use your experience to assess the situation, perform a focused analysis that reduces the remaining diagnostic burden, and recommend next action.
+
+      Software engineering task:
+      {{TASK_DESCRIPTION}}
+      
+      Observed tool-use behavior:
+      {{BEHAVIOR_DESCRIPTION}}
+
+      Relevant behavior details:
+      {{METADATA}}
+
+      Recent work trajectory:
+      {{RECENT_TRAJECTORY}}
+
+      Provide concise and context-aware assistance that:
+      1. Examines the recent trajectory and describes what happened in the observed tool-use behavior.
+      2. Assess whether the behavior is appropriate for the current situation or is hindering progress toward the task.
+      3. Recommends a concrete next action that advances the software engineering task. Do not merely give generic advice such as "try another approach" or "inspect the error."
+      4. Do not assume that every flagged behavior is harmful. First determine whether the behavior is intentional or still contributing to progress.
+      5. Do not invent tool results, code facts, errors, files, or task conditions that are absent from the provided information.
+      6. Uses direct, concise, and actionable natural language.
+
+      Use exactly the following output format:
+      Tool-use notice: <describe the observed behavior and its relevance to the current progress>
+      Recommended action: <provide focused assistance and state the concrete next action>
+
+    events:
+      blind_action:
+        behavior_description: "The agent tried to edit {{PATH}} using {{TOOL}} before inspecting the file in the current task."
+        # coaching_policy: "Tell the coding agent to inspect the file and obtain the context needed to make an evidence-based edit."
+        metadata_fields: [tool, path, raw_action, observation]
+      duplicate_action:
+        behavior_description: "The agent called {{TOOL}} with exactly the same arguments in 3 consecutive steps."
+        # coaching_policy: "Determine whether the repeated call is justified. If not, use the previous tool result and the current task context to tell the coding agent what different action it should take next. Do not recommend repeating the same call unless the trajectory provides a concrete reason."
+        metadata_fields: [current]
+      failed_action:
+        behavior_description: "The agent received {{ERROR_TYPE}} error again from {{TOOL}} without taking an effective recovery action after the previous error."
+        # coaching_policy: "Determine whether the observed error is an expected outcome of the current activity or an actual failure. If it is an actual failure, use the available error information and trajectory to identify the cause or unmet precondition and provide a concrete recovery instruction. Do not assume that every error indicates incorrect tool use."
+        metadata_fields: [tool, error_type, error_fingerprint, repeat_times, observation]
+      loop_action:
+        behavior_description: "The agent repeated the action pattern {{PATTERN}} for {{REPEAT_TIMES}} times."
+        # coaching_policy: "Determine whether the repeated sequence is intentional and still producing new information or meaningful progress. If it is no longer productive, identify where the cycle should be broken and provide an alternative next action based on the task and trajectory."
+        metadata_fields: [pattern, repeat_times, observation]
+      stalled_action:
+        behavior_description: "The agent took highly similar tool-use behavior across consecutive steps, each spanning {{SIZE}} interactions."
+        # coaching_policy: "Assess whether the recent actions are producing meaningful progress toward the coding agent's task. If progress has stalled or remains limited, identify the current ineffective strategy and tell the coding agent what materially different action it should take next."
+        metadata_fields: [pattern, repeat_times, production, score, observation]

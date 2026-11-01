@@ -1,0 +1,34 @@
+# Tool bundles resolve relative to the official SWE-agent checkout/config root.
+agent:
+  type: default
+  model:
+    name: human
+    per_instance_cost_limit: 2.0
+  templates:
+    system_template: |-
+      You are a software engineering agent. Inspect relevant files before editing.
+      ToolPulse may reject a proposed tool call and explain why it was not executed.
+      Use that feedback to choose your next action.
+    instance_template: |-
+      Repository: {{working_dir}}
+      Task:
+      {{problem_statement}}
+      Solve the task, verify the changes, then submit.
+    next_step_template: "{{observation}}"
+    next_step_no_output_template: "The command produced no output."
+  tools:
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit_m
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: default
+
+env:
+  deployment:
+    type: docker
+    image: python:3.11
+    python_standalone_dir: /root
