@@ -1,11 +1,11 @@
 from toolpulse import StepObservation, ToolPulse
 
 
-def test_inspection_retains_events_even_when_renderer_drops_hints():
+def test_inspection_retains_events_even_when_provider_drops_hints():
     class Drop:
-        def render(self, events, ctx):
+        def provide(self, events, ctx):
             return []
-    pulse = ToolPulse.for_swe_repo(hint_renderer=Drop())
+    pulse = ToolPulse.for_swe_repo(hint_provider=Drop())
     step = StepObservation('str_replace_editor str_replace a.py')
     result = pulse.inspect_action(step)
     assert [event.type for event in result.events] == ['blind_action']

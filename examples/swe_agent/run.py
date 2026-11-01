@@ -58,12 +58,12 @@ def main(argv=None) -> int:
 
     from sweagent.environment.swe_env import SWEEnv
     from sweagent.utils.config import load_environment_variables
-    from toolpulse import TemplateHintRenderer, ToolPulse
+    from toolpulse import TemplateHintProvider, ToolPulse
     from toolpulse.integrations.sweagent import ToolPulseSWEAgent
 
     load_environment_variables(config.env_var_path)
     pulse = ToolPulse.for_swe_repo(
-        language=args.language, hint_renderer=TemplateHintRenderer(hint_set_name=args.hint_set),
+        language=args.language, hint_provider=TemplateHintProvider(hint_set_name=args.hint_set),
     )
     agent = ToolPulseSWEAgent.from_config(
         config.agent, pulse=pulse, skip_on=set() if args.warn_only else {"blind_action"},

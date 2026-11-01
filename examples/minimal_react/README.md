@@ -101,7 +101,7 @@ Default hints use `<tool_pulse>...</tool_pulse>` tags. `different_message_type` 
 | Feed hints into the next turn | Assemble observations and append to history | Adapt tool responses, host templates, clipping, and retry messages |
 | New tasks and termination | Reset in `run()`; script exhaustion or step limit | Adapter setup, host termination, and refusal budget |
 
-Detectors, session state, hint renderers/sinks, and observation assembly are reusable. Extend them only when new detection rules or hint content are needed. SWE-agent requires an adapter to enter its existing lifecycle; this example's loop is directly editable, so it needs no additional agent class.
+Detectors, session state, hint providers/sinks, and observation assembly are reusable. Extend them only when new detection rules or hint content are needed. SWE-agent requires an adapter to enter its existing lifecycle; this example's loop is directly editable, so it needs no additional agent class.
 
 ## Verification
 

@@ -5,7 +5,7 @@ import argparse
 import json
 from time import perf_counter
 
-from toolpulse import StepObservation, TemplateHintRenderer, ToolPulse
+from toolpulse import StepObservation, TemplateHintProvider, ToolPulse
 
 
 TASK = "Change note.txt to ready, then check that its content is ready."
@@ -88,7 +88,7 @@ def main():
     ])
     args = parser.parse_args()
     pulse = ToolPulse.for_minimal_react(
-        hint_renderer=TemplateHintRenderer(hint_set_name=args.hint_set),
+        hint_provider=TemplateHintProvider(hint_set_name=args.hint_set),
     )
     run(pulse)
 

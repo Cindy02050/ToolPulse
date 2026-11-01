@@ -67,13 +67,13 @@ def test_state_wires_detector_stalled_cooldown():
 def test_recent_trajectory_drop_last_semantics():
     captured = []
 
-    class SpyRenderer:
-        def render(self, events, ctx):
+    class SpyProvider:
+        def provide(self, events, ctx):
             captured.append(ctx)
             return []
 
-    spy = SpyRenderer()
-    pulse = ToolPulse(parser=SweAgentParser(), labeler=RepoLabeler("python"), hint_renderer=spy)
+    spy = SpyProvider()
+    pulse = ToolPulse(parser=SweAgentParser(), labeler=RepoLabeler("python"), hint_provider=spy)
     # 3 identical failing computes: duplicate_action fires on the 3rd -> render is called
     for _ in range(3):
         pulse.observe_step(StepObservation(raw_action="python reproduce.py",

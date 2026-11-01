@@ -25,9 +25,9 @@ from toolpulse.core.types import (
 )
 from toolpulse.detectors.multi_granularity import MultiGranularityDetector
 from toolpulse.hints.assembly import assemble_observation
-from toolpulse.hints.llm import LLMHintRenderer
+from toolpulse.hints.llm import LLMHintProvider
 from toolpulse.hints.sinks import CallbackSink, ListSink, LoggingSink
-from toolpulse.hints.template import TemplateHintRenderer
+from toolpulse.hints.template import TemplateHintProvider
 from toolpulse.llm.stub import StubChatClient
 from toolpulse.middleware import ToolPulse
 from toolpulse.parsing.sweagent import SweAgentParser
@@ -55,7 +55,7 @@ __all__ = [
     "LabelInfo",
     "LabelKind",
     "ListSink",
-    "LLMHintRenderer",
+    "LLMHintProvider",
     "LoggingSink",
     "LoopActionEvent",
     "MultiGranularityDetector",
@@ -67,7 +67,7 @@ __all__ = [
     "StepObservation",
     "StubChatClient",
     "SweAgentParser",
-    "TemplateHintRenderer",
+    "TemplateHintProvider",
     "ToolPulse",
     "assemble_observation",
     "__version__",

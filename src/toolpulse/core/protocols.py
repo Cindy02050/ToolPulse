@@ -76,8 +76,10 @@ class Detector(Protocol):
 
 
 @runtime_checkable
-class HintRenderer(Protocol):
-    def render(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]: ...
+class HintProvider(Protocol):
+    """Provide hints for detected events using the current execution context."""
+
+    def provide(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]: ...
 
 
 @runtime_checkable

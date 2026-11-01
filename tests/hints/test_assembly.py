@@ -1,7 +1,7 @@
 import json
 
 import toolpulse
-from toolpulse import BlindActionEvent, Hint, TemplateHintRenderer, ToolPulse
+from toolpulse import BlindActionEvent, Hint, TemplateHintProvider, ToolPulse
 
 
 def _hints():
@@ -44,8 +44,8 @@ def test_other_hint_sets_use_tagged_format_without_mutating_hints():
     assert hints == original
 
 
-def test_middleware_assembly_uses_renderer_hint_set_and_allows_override():
-    pulse = ToolPulse.for_swe_repo(hint_renderer=TemplateHintRenderer(hint_set_name='different_message_type'))
+def test_middleware_assembly_uses_provider_hint_set_and_allows_override():
+    pulse = ToolPulse.for_swe_repo(hint_provider=TemplateHintProvider(hint_set_name='different_message_type'))
     hints = _hints()
     assert json.loads(pulse.assemble_observation('out', hints))['hint'] == 'first hint\nsecond hint'
     assert pulse.assemble_observation('out', hints, hint_set_name='remind_only') == toolpulse.assemble_observation('out', hints)

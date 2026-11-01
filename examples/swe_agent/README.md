@@ -43,11 +43,11 @@ The example writes the normal SWE-agent trajectory plus `toolpulse.json` with th
 ## Reuse the adapter directly
 
 ```python
-from toolpulse import TemplateHintRenderer, ToolPulse
+from toolpulse import TemplateHintProvider, ToolPulse
 from toolpulse.integrations.sweagent import ToolPulseSWEAgent
 
 pulse = ToolPulse.for_swe_repo(
-    hint_renderer=TemplateHintRenderer(hint_set_name="remind_only")
+    hint_provider=TemplateHintProvider(hint_set_name="remind_only")
 )
 agent = ToolPulseSWEAgent.from_config(
     config.agent,
@@ -67,7 +67,7 @@ Each agent must have its own ToolPulse instance. The adapter wraps the pulse's p
 - The third consecutive refusal ends the run with `exit_status=toolpulse_skip_limit` by default. Set `--max-consecutive-skips N` to change the limit, or `--warn-only` / `skip_on=set()` to deliver hints without blocking execution. A proposal accepted by pre resets the consecutive refusal counter.
 - Actual execution results are recorded once, including completed attempts that trigger SWE-agent's native retry mechanism and terminal tool timeouts. Bash syntax errors rejected before execution are not recorded as executions. Other host/environment exceptions retain the upstream handling; there may be no completed observation to analyze.
 - Observation text is left raw in the trajectory and passed raw to post analysis. Model-facing output is truncated/formatted first, then hints are attached. In JSON mode the displayed `observation` is also clipped when it exceeds the host limit; the unmodified output remains in the trajectory.
-- For successfully parsed calls, function-call IDs and thinking blocks are retained for both ordinary and native-retry messages. Responses rejected by the host parser before a valid call is available retain the host's format-error handling. Metadata in `step.extra_info["toolpulse"]` is JSON-safe and includes execution status, detected/rendered events and hint texts. Post event metadata includes events for delivered hints; events dropped by the post renderer are not independently exposed.
+- For successfully parsed calls, function-call IDs and thinking blocks are retained for both ordinary and native-retry messages. Responses rejected by the host parser before a valid call is available retain the host's format-error handling. Metadata in `step.extra_info["toolpulse"]` is JSON-safe and includes execution status, detected/rendered events and hint texts. Post event metadata includes events for delivered hints; events dropped by the post provider are not independently exposed.
 - `setup()` resets ToolPulse, prior host history, trajectory and execution counters before a new task. This adapter does not add support for the separate `RetryAgent` factory.
 
 The adapter does not fix SWE-agent's general native retry policy; the pre-refusal budget is independent of upstream format/tool retry limits. Message history processors still control how old observations are retained.

@@ -1,8 +1,8 @@
 # src/toolpulse/hints/llm.py
-"""LLM-backed hint renderer — the ``llm_coach`` ``HintRenderer`` implementation.
+"""LLM-backed hint provider — the ``llm_coach`` ``HintProvider`` implementation.
 
 Port of legacy ``sweagent/agent/algorithm/utils/llm_hint_builder.py`` lines 1-139
-(``LLMHintBuilder`` → ``LLMHintRenderer``): the per-event fail-soft loop, the
+(``LLMHintBuilder`` → ``LLMHintProvider``): the per-event fail-soft loop, the
 master-prompt pipeline (``{{BEHAVIOR_DESCRIPTION}}``/``{{COACHING_POLICY}}``/
 ``{{TASK_DESCRIPTION}}``/``{{RECENT_TRAJECTORY}}``/``{{METADATA}}`` + leaf
 tokens) and the trajectory serialization with its ``_TRAJECTORY_FIELD_LIMIT``
@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 _TRAJECTORY_FIELD_LIMIT = 500
 
 
-class LLMHintRenderer:
-    """Render llm_coach hints by filling the master prompt template and calling an LLM."""
+class LLMHintProvider:
+    """Provide llm_coach hints by filling the prompt template and calling an LLM."""
 
     def __init__(self, hint_set: dict[str, Any], client: ChatClient, *,
                  offline: bool = False, dump_prompts: bool = False) -> None:
@@ -39,7 +39,7 @@ class LLMHintRenderer:
         self.offline = offline
         self.dump_prompts = dump_prompts
 
-    def render(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]:
+    def provide(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]:
         hints: list[Hint] = []
         events_map = self.hint_set.get("events", {}) or {}
         for event in events:
@@ -107,7 +107,7 @@ class LLMHintRenderer:
         return {
             **event,
             "task_description": ctx.task_description or "",
-            "recent_trajectory": LLMHintRenderer._serialize_trajectory(ctx.recent_trajectory),
+            "recent_trajectory": LLMHintProvider._serialize_trajectory(ctx.recent_trajectory),
         }
 
     @staticmethod
@@ -158,7 +158,7 @@ class LLMHintRenderer:
                 f"[{label}]\n"
                 f"ACTION: {action.get('raw_action', '')}\n"
                 f"THOUGHT: {action.get('thought', '')}\n"
-                f"OBSERVATION: {LLMHintRenderer._truncate(action.get('observation', ''))}"
+                f"OBSERVATION: {LLMHintProvider._truncate(action.get('observation', ''))}"
             )
         return "\n\n".join(blocks)
 
@@ -170,7 +170,7 @@ class LLMHintRenderer:
             subset = dict(event)
         if "observation" in subset:
             # Bound the top-level observation; nested values (e.g. duplicate's current) are left as-is.
-            subset["observation"] = LLMHintRenderer._truncate(subset["observation"])
+            subset["observation"] = LLMHintProvider._truncate(subset["observation"])
         return json.dumps(subset, ensure_ascii=False, default=str)
 
     @staticmethod

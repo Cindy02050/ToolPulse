@@ -7,7 +7,7 @@ import pytest
 
 from toolpulse import (
     Action, BlindActionEvent, CallbackSink, FailedActionEvent, Hint, HintContext,
-    LLMHintRenderer, ListSink, MultiGranularityDetector, StepObservation, ToolPulse,
+    LLMHintProvider, ListSink, MultiGranularityDetector, StepObservation, ToolPulse,
 )
 from toolpulse.semantics.repo.errors import observation_error_fingerprint
 
@@ -153,8 +153,8 @@ def test_invalid_llm_response_is_dropped(response):
     class Client:
         def complete(self, *args, **kwargs):
             return response
-    renderer = LLMHintRenderer({'events': {'failed_action': {'prompt': 'p'}}}, Client())
-    assert renderer.render([FailedActionEvent('runtime', 'x', 'fp', 2)], HintContext('task', 'obs')) == []
+    provider = LLMHintProvider({'events': {'failed_action': {'prompt': 'p'}}}, Client())
+    assert provider.provide([FailedActionEvent('runtime', 'x', 'fp', 2)], HintContext('task', 'obs')) == []
 
 
 def test_llm_can_continue_after_invalid_response():
@@ -163,13 +163,13 @@ def test_llm_can_continue_after_invalid_response():
             self.values = iter([None, ' recovered '])
         def complete(self, *args, **kwargs):
             return next(self.values)
-    renderer = LLMHintRenderer({'events': {'failed_action': {'prompt': 'p'}}}, Client())
+    provider = LLMHintProvider({'events': {'failed_action': {'prompt': 'p'}}}, Client())
     events = [FailedActionEvent('runtime', 'x', 'fp', 2)] * 2
-    assert [h.text for h in renderer.render(events, HintContext('t', 'o'))] == ['recovered']
+    assert [h.text for h in provider.provide(events, HintContext('t', 'o'))] == ['recovered']
 
 
-def test_readme_uses_actual_optional_client_module():
-    readme = (Path(__file__).parents[1] / 'README.md').read_text()
+def test_implementation_guide_uses_actual_optional_client_module():
+    readme = (Path(__file__).parents[1] / 'docs/implementation-guide.md').read_text()
     assert 'from toolpulse.llm import OpenAIChatClient' not in readme
     assert 'from toolpulse.llm.openai_client import OpenAIChatClient' in readme
 

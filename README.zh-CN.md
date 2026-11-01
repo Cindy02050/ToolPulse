@@ -63,7 +63,7 @@ ToolPulse 围绕方法中的三种形式提供辅助：
 |---|---|---|
 | **言语提示（verbal cueing）** | 用简短提醒指出行为，或引导下一步操作 | 模板提示：`remind_only` 和 `remind_and_guide` |
 | **视觉提示（visual cueing）** | 通过结构化呈现，让文本反馈更容易区分 | `different_message_type`：返回分别包含 `observation` 和 `hint` 字段的 JSON 字符串 |
-| **保护性辅助（tactile spotting）** | 借助快速辅助语言模型，提供针对当前上下文的建议 | `LLMHintRenderer`，由调用方配置模型客户端 |
+| **保护性辅助（tactile spotting）** | 借助快速辅助语言模型，提供针对当前上下文的建议 | `LLMHintProvider`，由调用方配置模型客户端 |
 
 这里的视觉提示采用结构化文本；保护性辅助沿用举重保护者的比喻，指辅助模型提供的帮助。模型选择和响应速度取决于配置的服务。两个示例默认均使用模板提示，不额外调用辅助模型。
 
@@ -73,7 +73,7 @@ ToolPulse 围绕方法中的三种形式提供辅助：
 python examples/minimal_react/run.py --hint-set different_message_type
 ```
 
-如需辅助模型生成建议，先通过 `python -m pip install -e '.[llm]'` 安装可选客户端依赖，再按[实现指南](docs/implementation-guide.md)配置 renderer 和模型客户端。
+如需辅助模型生成建议，先通过 `python -m pip install -e '.[llm]'` 安装可选客户端依赖，再按[实现指南](docs/implementation-guide.md)配置 provider 和模型客户端。
 
 ## 示例
 
@@ -90,7 +90,7 @@ SWE-agent 示例默认使用交互式 `human` 模式，无需 API key。使用�
 
 在宿主循环中，执行前调用 `inspect_action()`，对每次已执行动作调用一次 `observe_step()`。用 `assemble_observation()` 将返回的提示与工具反馈合并，交给智能体的下一轮输入；开始新任务时重置会话。宿主可以根据 pre 检查事件选择拦截调用或提醒后继续执行。
 
-[minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)完整展示了这些步骤。[实现指南](docs/implementation-guide.md)提供 parser、labeler、detector、renderer 和 sink 的扩展说明。
+[minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)完整展示了这些步骤。[实现指南](docs/implementation-guide.md)提供 parser、labeler、detector、provider 和 sink 的扩展说明。
 
 ## 仓库结构
 

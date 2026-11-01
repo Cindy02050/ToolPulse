@@ -1,8 +1,8 @@
 # src/toolpulse/hints/template.py
-"""Template-based hint renderer — the default ``HintRenderer`` implementation.
+"""Template-based hint provider — the default ``HintProvider`` implementation.
 
 Port of legacy ``sweagent/agent/tool_familiar_hints.py`` lines 24-112
-(``ToolFamiliarHintRenderer`` → ``TemplateHintRenderer``): the ``_render_event``
+(``ToolFamiliarHintRenderer`` → ``TemplateHintProvider``): the ``_render_event``
 branch structure is preserved verbatim; events are ``PulseEvent`` objects
 (serialized via ``to_dict()``) and rendered texts are wrapped as ``Hint``s.
 """
@@ -27,20 +27,20 @@ def load_hint_sets() -> dict[str, Any]:
     ) or {}
     hint_sets = data.get("hint_sets")
     if not isinstance(hint_sets, dict):
-        message = f"TemplateHintRenderer hint config must define a 'hint_sets' mapping: {HINTS_RESOURCE}"
+        message = f"TemplateHintProvider hint config must define a 'hint_sets' mapping: {HINTS_RESOURCE}"
         raise ValueError(message)
     return hint_sets
 
 
-class TemplateHintRenderer:
-    """Render structured ToolPulse events with externally configured hint text."""
+class TemplateHintProvider:
+    """Provide hints for ToolPulse events using externally configured templates."""
 
     def __init__(self, hint_sets: dict[str, Any] | None = None,
                  hint_set_name: str = DEFAULT_HINT_SET) -> None:
         self.hint_sets = hint_sets if hint_sets is not None else load_hint_sets()
         self.hint_set_name = hint_set_name
 
-    def render(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]:
+    def provide(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]:
         hint_set = self._hint_set(self.hint_set_name)
         hints: list[Hint] = []
 

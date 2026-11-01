@@ -4,13 +4,13 @@ import runpy
 
 import pytest
 
-from toolpulse import StepObservation, TemplateHintRenderer, ToolPulse
+from toolpulse import StepObservation, TemplateHintProvider, ToolPulse
 
 
 @pytest.mark.parametrize("hint_set", ["remind_only", "different_message_type"])
 def test_complete_demo_records_execution_and_delivers_feedback(hint_set, capsys):
     example = runpy.run_path(str(Path(__file__).resolve().parents[1] / "examples/minimal_react/run.py"))
-    pulse = ToolPulse.for_minimal_react(hint_renderer=TemplateHintRenderer(hint_set_name=hint_set))
+    pulse = ToolPulse.for_minimal_react(hint_provider=TemplateHintProvider(hint_set_name=hint_set))
     # A reused pulse must not carry actions or hints into a new task.
     pulse.observe_step(StepObservation(raw_action='{"tool":"check","args":{"path":"old","expected":"x"}}',
                                       observation='{"ok":true}'))

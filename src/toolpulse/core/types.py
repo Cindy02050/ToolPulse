@@ -139,7 +139,7 @@ class Hint:
 
 @dataclass(frozen=True)
 class ActionInspection:
-    """Pre-execution events survive even if a renderer produces no hints."""
+    """Pre-execution events survive even if a provider produces no hints."""
     events: list[PulseEvent]
     hints: list[Hint]
 

@@ -63,7 +63,7 @@ ToolPulse's assistance follows three forms from the method:
 |---|---|---|
 | **Verbal cueing** | Briefly draw attention to a behavior or guide the next move | Template hints: `remind_only` and `remind_and_guide` |
 | **Visual cueing** | Make textual feedback easier to distinguish through structured presentation | `different_message_type`: a JSON string with separate `observation` and `hint` fields |
-| **Tactile spotting** | Offer context-specific suggestions through a fast auxiliary language model | `LLMHintRenderer` with a caller-configured model client |
+| **Tactile spotting** | Offer context-specific suggestions through a fast auxiliary language model | `LLMHintProvider` with a caller-configured model client |
 
 Visual cueing here uses structured text. Tactile spotting is the spotter metaphor for auxiliary-model assistance; model choice and latency depend on the configured service. Both examples use template hints by default, without an auxiliary model call.
 
@@ -73,7 +73,7 @@ To try structured feedback:
 python examples/minimal_react/run.py --hint-set different_message_type
 ```
 
-For auxiliary-model assistance, install the optional client dependency with `python -m pip install -e '.[llm]'` and configure the renderer and client as described in the [implementation guide](docs/implementation-guide.md).
+For auxiliary-model assistance, install the optional client dependency with `python -m pip install -e '.[llm]'` and configure the provider and client as described in the [implementation guide](docs/implementation-guide.md).
 
 ## Examples
 
@@ -90,7 +90,7 @@ A new integration supplies an **action parser** and a **semantic labeler**, incl
 
 In the host loop, call `inspect_action()` before execution and `observe_step()` once for each executed action. Use `assemble_observation()` to combine the returned hints with tool feedback for the next agent input, and reset the session for a new task. The host may act on pre-check events to intercept a call or continue with a warning.
 
-The [minimal ReAct walkthrough](examples/minimal_react/README.md) shows all of these steps. The [implementation guide](docs/implementation-guide.md) covers custom parsers, labelers, detectors, renderers, and sinks.
+The [minimal ReAct walkthrough](examples/minimal_react/README.md) shows all of these steps. The [implementation guide](docs/implementation-guide.md) covers custom parsers, labelers, detectors, providers, and sinks.
 
 ## Repository structure
 

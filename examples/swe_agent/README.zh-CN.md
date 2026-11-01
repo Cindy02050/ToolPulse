@@ -43,11 +43,11 @@ python examples/swe_agent/run.py \
 ## 直接复用 adapter
 
 ```python
-from toolpulse import TemplateHintRenderer, ToolPulse
+from toolpulse import TemplateHintProvider, ToolPulse
 from toolpulse.integrations.sweagent import ToolPulseSWEAgent
 
 pulse = ToolPulse.for_swe_repo(
-    hint_renderer=TemplateHintRenderer(hint_set_name="remind_only")
+    hint_provider=TemplateHintProvider(hint_set_name="remind_only")
 )
 agent = ToolPulseSWEAgent.from_config(
     config.agent,
@@ -67,7 +67,7 @@ agent.run(env=env, problem_statement=problem_statement, output_dir=output_dir)
 - 默认连续第三次拒绝时，以 `exit_status=toolpulse_skip_limit` 结束。可用 `--max-consecutive-skips N` 修改上限，或用 `--warn-only` / `skip_on=set()` 只提醒而不拦截。pre 接受一次提案后，连续拒绝计数归零。
 - 实际执行结果只记录一次，包括触发 SWE-agent 原生重试的已完成尝试，以及达到终止条件的工具超时。执行前被拒绝的 bash 语法错误不记作执行。其他宿主或环境异常沿用上游处理，可能没有可分析的完整 observation。
 - 轨迹和 post 分析保留原始 observation。面向模型的输出先截断或格式化，再附加提示。JSON 模式下，展示的 `observation` 超过宿主上限时也会截断；轨迹仍保留原始输出。
-- 对成功解析的调用，普通消息和原生重试消息都会保留 function-call ID 与 thinking blocks。宿主 parser 在得到有效调用前拒绝的响应仍使用宿主的格式错误处理。`step.extra_info["toolpulse"]` 中的元数据可安全序列化为 JSON，包括执行状态、检测或渲染的事件与提示文本。post 事件元数据包含已交付提示所对应的事件；被 post renderer 丢弃的事件不会单独暴露。
+- 对成功解析的调用，普通消息和原生重试消息都会保留 function-call ID 与 thinking blocks。宿主 parser 在得到有效调用前拒绝的响应仍使用宿主的格式错误处理。`step.extra_info["toolpulse"]` 中的元数据可安全序列化为 JSON，包括执行状态、检测或渲染的事件与提示文本。post 事件元数据包含已交付提示所对应的事件；被 post provider 丢弃的事件不会单独暴露。
 - 新任务开始时，`setup()` 重置 ToolPulse、此前的宿主历史、轨迹和执行计数。该 adapter 不增加对独立 `RetryAgent` 工厂的支持。
 
 adapter 不修改 SWE-agent 的通用原生重试策略；pre 拒绝预算与上游格式或工具重试上限相互独立。历史中的旧 observation 仍由宿主消息历史处理器管理。

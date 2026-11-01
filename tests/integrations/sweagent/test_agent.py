@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from toolpulse import StepObservation, TemplateHintRenderer, ToolPulse
+from toolpulse import StepObservation, TemplateHintProvider, ToolPulse
 
 
 @pytest.fixture
@@ -121,9 +121,9 @@ def test_warn_only_executes_and_delivers_pre_hint(host):
 
 def test_pre_skip_survives_dropped_llm_hints(host):
     class Drop:
-        def render(self, events, ctx):
+        def provide(self, events, ctx):
             return []
-    agent = configured(host, pulse=ToolPulse.for_swe_repo(hint_renderer=Drop()))
+    agent = configured(host, pulse=ToolPulse.for_swe_repo(hint_provider=Drop()))
     step = agent.step()
     assert step.extra_info['toolpulse']['execution_status'] == 'skipped'
     assert agent._env.commands == []
@@ -155,7 +155,7 @@ def test_raw_output_is_used_for_post_and_hint_survives_truncation(host):
 
 
 def test_json_mode_is_actual_json_tool_content(host):
-    pulse = ToolPulse.for_swe_repo(hint_renderer=TemplateHintRenderer(hint_set_name='different_message_type'))
+    pulse = ToolPulse.for_swe_repo(hint_provider=TemplateHintProvider(hint_set_name='different_message_type'))
     agent = configured(host, pulse=pulse)
     agent.step()
     content = json.loads(agent.history[-1]['content'])
@@ -218,7 +218,7 @@ def test_native_retry_clips_before_appending_feedback(host):
 
 
 def test_text_retry_keeps_json_shape_and_saved_feedback(host):
-    pulse = ToolPulse.for_swe_repo(hint_renderer=TemplateHintRenderer(hint_set_name='different_message_type'))
+    pulse = ToolPulse.for_swe_repo(hint_provider=TemplateHintProvider(hint_set_name='different_message_type'))
     agent = configured(host, pulse=pulse)
     step = host.StepOutput(output='python run.py', action='python run.py', observation='actual output', extra_info={
         'toolpulse': {'hints': [{'event': {'type': 'custom'}, 'text': 'saved feedback'}]}

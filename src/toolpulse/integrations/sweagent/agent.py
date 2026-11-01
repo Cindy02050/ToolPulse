@@ -25,7 +25,7 @@ from swerex.exceptions import BashIncorrectSyntaxError, CommandTimeoutError
 from jinja2 import Template
 
 from toolpulse.core.types import Hint, HintContext, PulseEvent, StepObservation
-from toolpulse.hints.template import TemplateHintRenderer
+from toolpulse.hints.template import TemplateHintProvider
 from toolpulse.integrations.sweagent.parser import SWEAgentActionParser
 from toolpulse.middleware import ToolPulse
 from toolpulse.semantics.repo.labeler import RepoLabeler
@@ -138,7 +138,7 @@ class ToolPulseSWEAgent(DefaultAgent):
         # fallback makes the reason for a refusal visible to the next query.
         missing = [event for event in blocked if not any(h.event == event for h in hints)]
         if missing:
-            fallback = TemplateHintRenderer().render(missing, HintContext(
+            fallback = TemplateHintProvider().provide(missing, HintContext(
                 task_description=self.pulse.task_description, step_observation="",
                 recent_trajectory=self.pulse.state.recent_actions(3),
             ))
@@ -222,7 +222,7 @@ class ToolPulseSWEAgent(DefaultAgent):
         return self.pulse.assemble_observation(observation, hints, hint_set_name=self.hint_set_name)
 
     def _present_observation(self, step, rendered_error: str | None = None) -> str:
-        name = self.hint_set_name or getattr(self.pulse.hint_renderer, "hint_set_name", "remind_only")
+        name = self.hint_set_name or getattr(self.pulse.hint_provider, "hint_set_name", "remind_only")
         limit = self.templates.max_observation_length
         if rendered_error is not None or name == "different_message_type":
             observation = step.observation if rendered_error is None else rendered_error

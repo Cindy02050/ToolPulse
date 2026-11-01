@@ -101,7 +101,7 @@ Observation 同样使用 JSON 字符串，协议是 `{"ok": true, ...}` 或 `{"o
 | 将提示放回下一轮 | 合并 observation 后追加历史 | 适配工具响应、宿主模板、截断和重试消息 |
 | 新任务与终止 | `run()` 重置；预设序列结束或步数上限 | adapter 的 setup、宿主结束逻辑及拒绝预算 |
 
-检测器、会话状态、提示 renderer/sink 和 observation assembly 都可复用。只有需要新增检测规则或提示内容时才扩展它们。SWE-agent 需要额外 adapter 来进入已有生命周期；本例的循环可直接修改，因此无须再封装 agent 类。
+检测器、会话状态、提示 provider/sink 和 observation assembly 都可复用。只有需要新增检测规则或提示内容时才扩展它们。SWE-agent 需要额外 adapter 来进入已有生命周期；本例的循环可直接修改，因此无须再封装 agent 类。
 
 ## 验证
 

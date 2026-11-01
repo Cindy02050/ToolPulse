@@ -1,5 +1,5 @@
 # src/toolpulse/middleware.py
-"""Composition root: assembles parser/labeler/detector/renderer/sink (design §5.3)."""
+"""Composition root: assembles parser/labeler/detector/provider/sink (design §5.3)."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -7,7 +7,7 @@ from dataclasses import replace
 from collections.abc import Sequence
 import math
 
-from toolpulse.core.protocols import ActionLabeler, ActionParser, Detector, HintRenderer, HintSink
+from toolpulse.core.protocols import ActionLabeler, ActionParser, Detector, HintProvider, HintSink
 from toolpulse.core.types import (
     Action,
     ActionInspection,
@@ -20,7 +20,7 @@ from toolpulse.core.types import (
 from toolpulse.detectors.multi_granularity import MultiGranularityDetector
 from toolpulse.hints.assembly import assemble_observation
 from toolpulse.hints.sinks import ListSink
-from toolpulse.hints.template import TemplateHintRenderer
+from toolpulse.hints.template import TemplateHintProvider
 from toolpulse.semantics.generic.labeler import GenericLabeler
 from toolpulse.state.session import SessionState
 
@@ -29,12 +29,12 @@ _DEFAULT_STALLED_COOLDOWN_STEPS = 12
 
 class ToolPulse:
     def __init__(self, parser: ActionParser, *, labeler: ActionLabeler | None = None,
-                 detector: Detector | None = None, hint_renderer: HintRenderer | None = None,
+                 detector: Detector | None = None, hint_provider: HintProvider | None = None,
                  hint_sink: HintSink | None = None) -> None:
         self.parser = parser
         self.labeler = labeler or GenericLabeler()
         self.detector = detector or MultiGranularityDetector()
-        self.hint_renderer = hint_renderer or TemplateHintRenderer()
+        self.hint_provider = hint_provider or TemplateHintProvider()
         self.hint_sink = hint_sink or ListSink(max_hints=getattr(self.detector, "max_history", 500))
         self.task_description = ""
         self._state = self._new_state()
@@ -81,9 +81,9 @@ class ToolPulse:
 
     def assemble_observation(self, observation: str, hints: Sequence[Hint], *,
                              hint_set_name: str | None = None) -> str:
-        """Format this batch for the host, defaulting to the renderer's hint set."""
+        """Format this batch for the host, defaulting to the provider's hint set."""
         name = hint_set_name if hint_set_name is not None else getattr(
-            self.hint_renderer, "hint_set_name", "remind_only"
+            self.hint_provider, "hint_set_name", "remind_only"
         )
         return assemble_observation(observation, hints, hint_set_name=name)
 
@@ -128,6 +128,6 @@ class ToolPulse:
             return []
         ctx = HintContext(task_description=self.task_description, step_observation=step.observation,
                           recent_trajectory=self.state.recent_actions(3, drop_last=drop_last))
-        hints = self.hint_renderer.render(events, ctx)
+        hints = self.hint_provider.provide(events, ctx)
         self.hint_sink.emit(hints, step)
         return hints

@@ -1,7 +1,7 @@
 # tests/core/test_protocols.py
 from typing import Any
 from toolpulse.core.protocols import (
-    ActionLabeler, ActionParser, ChatClient, Detector, FileTracker, HintRenderer,
+    ActionLabeler, ActionParser, ChatClient, Detector, FileTracker, HintProvider,
     HintSink, TrajectoryState,
 )
 from toolpulse.core.types import Action, ActionRecord, Hint, HintContext, LabelInfo, LabelKind, PulseEvent, StepObservation
@@ -54,14 +54,14 @@ def test_stub_detector_signature_takes_step_and_record():
     assert isinstance(D(), Detector)
 
 
-def test_stub_parser_renderer_sink_chat():
+def test_stub_parser_provider_sink_chat():
     class P:
         def parse(self, step: StepObservation) -> Action: return Action(None, {}, "")
     class R:
-        def render(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]: return []
+        def provide(self, events: list[PulseEvent], ctx: HintContext) -> list[Hint]: return []
     class S:
         def emit(self, hints: list[Hint], step: StepObservation) -> None: ...
     class C:
         def complete(self, prompt: str, *, system: str | None = None) -> str: return ""
-    assert isinstance(P(), ActionParser) and isinstance(R(), HintRenderer)
+    assert isinstance(P(), ActionParser) and isinstance(R(), HintProvider)
     assert isinstance(S(), HintSink) and isinstance(C(), ChatClient)
