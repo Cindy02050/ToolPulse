@@ -1,5 +1,9 @@
 # ToolPulse
 
+<p align="center">
+  <img src="assets/toolpulse_logo.png" alt="ToolPulse logo" width="480">
+</p>
+
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 **面向任务型智能体、基于状态流追踪的在线工具使用辅助中间件。**
@@ -7,6 +11,8 @@
 ToolPulse 为智能体的自主工具使用提供基础支持。它跨交互追踪执行上下文与工具使用的时序模式，在调用执行前检查拟议动作，在智能体继续行动前分析工具反馈。持续演化的状态帮助它结合智能体的工作节奏，识别笨拙的工具操作和工具使用中的绕路行为。
 
 当需要介入时，ToolPulse 可以给出提醒、提供针对当前上下文的建议，或由宿主拦截依据不足的调用。它像举重时的保护者，在需要时给予提示或搭一把手，而推进任务的责任仍由智能体承担。
+
+![ToolPulse 概念图：状态流、Symptom Detector 与 Assistance](assets/ToolPulse.png)
 
 ## 快速开始
 
@@ -31,9 +37,11 @@ Finished
 
 决策使用预设顺序以便复现，不会根据提示改变；工具结果来自对内存文件的实际操作。完整说明见 [minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)。
 
-## 工作方式
+## How it works
 
-ToolPulse 跨交互维护执行状态，在两个时点检查工具使用：
+### Symptom Detector
+
+Symptom Detector 利用持续演化的执行状态，识别跨交互出现的工具使用症状。它在执行前检查拟议调用，在执行后分析工具反馈，结合动作轨迹、文件查看记录、失败记录与时序模式进行判断：
 
 ```text
 智能体提出工具调用
@@ -43,9 +51,9 @@ ToolPulse 跨交互维护执行状态，在两个时点检查工具使用：
   → 将辅助信息加入智能体的下一轮输入
 ```
 
-当前检测器覆盖五类行为：
+当前检测器识别五类症状：
 
-| 行为 | 检测信号 |
+| 症状 | 检测信号 |
 |---|---|
 | Blind Command | 在当前任务中尚未查看文件就尝试修改 |
 | Calling Repetition | 连续使用相同动作和参数调用工具 |
@@ -55,25 +63,24 @@ ToolPulse 跨交互维护执行状态，在两个时点检查工具使用：
 
 框架提供动作语法与语义，ToolPulse 提供共享的状态追踪、检测和辅助信息生成能力。宿主控制工具执行，并将反馈交给智能体。
 
-## 三种辅助形式
+### Assistance
 
-ToolPulse 围绕方法中的三种形式提供辅助：
+Assistance 将检测到的症状转化为智能体下一轮可读取的 hint。可以选择下列提示，也可以按任务与宿主框架实现自定义 `HintProvider`。
 
-| 形式 | 目的 | 当前实现机制 |
+`HintProvider` 将症状检测与提示生成解耦，使同一种检测结果能够根据任务与执行上下文获得不同的辅助。这一设计允许使用者选择或替换 hint 的生成方式，复用已有检测器与宿主接入逻辑。
+
+| Hint 选项 | 智能体收到的内容 | 配置方式 |
 |---|---|---|
-| **言语提示（verbal cueing）** | 用简短提醒指出行为，或引导下一步操作 | 模板提示：`remind_only` 和 `remind_and_guide` |
-| **视觉提示（visual cueing）** | 通过结构化呈现，让文本反馈更容易区分 | `different_message_type`：返回分别包含 `observation` 和 `hint` 字段的 JSON 字符串 |
-| **保护性辅助（tactile spotting）** | 借助快速辅助语言模型，提供针对当前上下文的建议 | `LLMHintProvider`，由调用方配置模型客户端 |
+| 仅提醒提示 | 简短描述检测到的症状 | `TemplateHintProvider(hint_set_name="remind_only")` |
+| 带引导的提示 | 症状描述与固定建议 | `TemplateHintProvider(hint_set_name="remind_and_guide")` |
+| 结构化提示 | 分别包含 `observation` 和 `hint` 字段的 JSON 字符串 | `TemplateHintProvider(hint_set_name="different_message_type")` |
+| 上下文相关提示 | 辅助语言模型根据任务、工具反馈与近期轨迹生成的建议 | 为 `LLMHintProvider` 配置提示集合与模型客户端 |
 
-这里的视觉提示采用结构化文本；保护性辅助沿用举重保护者的比喻，指辅助模型提供的帮助。模型选择和响应速度取决于配置的服务。两个示例默认均使用模板提示，不额外调用辅助模型。
-
-体验结构化反馈：
+两个示例默认使用模板提示，不额外调用辅助模型。体验结构化反馈：
 
 ```bash
 python examples/minimal_react/run.py --hint-set different_message_type
 ```
-
-如需辅助模型生成建议，先通过 `python -m pip install -e '.[llm]'` 安装可选客户端依赖，再按[实现指南](docs/implementation-guide.md)配置 provider 和模型客户端。
 
 ## 示例
 
@@ -90,7 +97,7 @@ SWE-agent 示例默认使用交互式 `human` 模式，无需 API key。使用�
 
 在宿主循环中，执行前调用 `inspect_action()`，对每次已执行动作调用一次 `observe_step()`。用 `assemble_observation()` 将返回的提示与工具反馈合并，交给智能体的下一轮输入；开始新任务时重置会话。宿主可以根据 pre 检查事件选择拦截调用或提醒后继续执行。
 
-[minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)完整展示了这些步骤。[实现指南](docs/implementation-guide.md)提供 parser、labeler、detector、provider 和 sink 的扩展说明。
+[minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)完整展示了这些步骤，包括接入新框架所需的 parser、语义标签表与循环接入点。
 
 ## 仓库结构
 
@@ -105,7 +112,7 @@ ToolPulse/
 │   ├── minimal_react/   # 可直接修改的预设 ReAct 循环
 │   └── swe_agent/       # 官方 SWE-agent 的配置与运行入口
 ├── tests/               # 单元、集成与兼容回归测试
-├── docs/                # 实现指南与设计文档
+├── assets/              # 项目 logo 与概念图
 └── pyproject.toml       # 包元信息与依赖
 ```
 
@@ -122,7 +129,7 @@ python -m pip install -e '.[dev]'
 python -m pytest
 ```
 
-未安装可选宿主时，需要 SWE-agent 的测试会跳过。[实现指南](docs/implementation-guide.md)保留了原 README 中的架构、API 契约、ToolFamiliar 代码映射和有意保留的兼容差异。
+未安装可选宿主时，需要 SWE-agent 的测试会跳过。
 
 ## 许可证
 

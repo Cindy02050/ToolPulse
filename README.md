@@ -1,5 +1,9 @@
 # ToolPulse
 
+<p align="center">
+  <img src="assets/toolpulse_logo.png" alt="ToolPulse logo" width="480">
+</p>
+
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 **State-flow-tracking online tool-use assistance for task-oriented agents.**
@@ -7,6 +11,8 @@
 ToolPulse is a middleware support layer for autonomous tool use. It tracks an agent's execution context and temporal tool-use patterns across interactions, examining proposed calls before execution and tool feedback before the agent continues. Its evolving state helps identify clumsy tool-use behaviors and tool-use detours in the context of the agent's working rhythm.
 
 When assistance is warranted, ToolPulse provides a cue, offers context-specific guidance, or lets the host intercept an insufficiently grounded call. Like a weightlifting spotter, it lends a hand when needed while the agent remains responsible for carrying the task forward.
+
+![ToolPulse concept overview: state flow, Symptom Detector, and Assistance](assets/ToolPulse.png)
 
 ## Quick start
 
@@ -33,7 +39,9 @@ Decisions are scripted for reproducibility; they do not change in response to hi
 
 ## How it works
 
-ToolPulse maintains execution state across interactions and checks tool use at two points:
+### Symptom Detector
+
+The Symptom Detector uses the evolving execution state to identify tool-use symptoms across interactions. It checks proposed calls before execution and analyzes tool feedback after execution, drawing on the action trajectory, file-view history, failure records, and temporal patterns:
 
 ```text
 Agent proposes a tool call
@@ -43,9 +51,9 @@ Agent proposes a tool call
   → Assistance is added to the next agent input
 ```
 
-The current detector covers five behaviors:
+The current detector identifies five symptoms:
 
-| Behavior | Signal |
+| Symptom | Signal |
 |---|---|
 | Blind Command | Editing a file before inspecting it in the current task |
 | Calling Repetition | Consecutive calls with the same action and arguments |
@@ -55,25 +63,24 @@ The current detector covers five behaviors:
 
 The framework supplies action syntax and semantics; ToolPulse supplies shared state tracking, detection, and assistance generation. The host controls execution and delivers the feedback to the agent.
 
-## Forms of assistance
+### Assistance
 
-ToolPulse's assistance follows three forms from the method:
+Assistance turns detected symptoms into hints for the agent's next interaction. Choose from the options below, or implement a custom `HintProvider` for your task and host framework.
 
-| Form | Purpose | Mechanism in this implementation |
+`HintProvider` separates symptom detection from hint generation, so the same detected behavior can receive different assistance depending on the task and execution context. This design lets users choose or replace how hints are produced while reusing the detector and host integration.
+
+| Hint option | What the agent receives | Configuration |
 |---|---|---|
-| **Verbal cueing** | Briefly draw attention to a behavior or guide the next move | Template hints: `remind_only` and `remind_and_guide` |
-| **Visual cueing** | Make textual feedback easier to distinguish through structured presentation | `different_message_type`: a JSON string with separate `observation` and `hint` fields |
-| **Tactile spotting** | Offer context-specific suggestions through a fast auxiliary language model | `LLMHintProvider` with a caller-configured model client |
+| Reminder-only hints | A brief description of the detected symptom | `TemplateHintProvider(hint_set_name="remind_only")` |
+| Guided hints | A symptom description plus a fixed tip | `TemplateHintProvider(hint_set_name="remind_and_guide")` |
+| Structured hints | A JSON string with separate `observation` and `hint` fields | `TemplateHintProvider(hint_set_name="different_message_type")` |
+| Context-specific hints | Suggestions from an auxiliary language model using the task, tool feedback, and recent trajectory | `LLMHintProvider` with a configured hint set and model client |
 
-Visual cueing here uses structured text. Tactile spotting is the spotter metaphor for auxiliary-model assistance; model choice and latency depend on the configured service. Both examples use template hints by default, without an auxiliary model call.
-
-To try structured feedback:
+Both examples default to template hints without an auxiliary model call. To try structured feedback:
 
 ```bash
 python examples/minimal_react/run.py --hint-set different_message_type
 ```
-
-For auxiliary-model assistance, install the optional client dependency with `python -m pip install -e '.[llm]'` and configure the provider and client as described in the [implementation guide](docs/implementation-guide.md).
 
 ## Examples
 
@@ -90,7 +97,7 @@ A new integration supplies an **action parser** and a **semantic labeler**, incl
 
 In the host loop, call `inspect_action()` before execution and `observe_step()` once for each executed action. Use `assemble_observation()` to combine the returned hints with tool feedback for the next agent input, and reset the session for a new task. The host may act on pre-check events to intercept a call or continue with a warning.
 
-The [minimal ReAct walkthrough](examples/minimal_react/README.md) shows all of these steps. The [implementation guide](docs/implementation-guide.md) covers custom parsers, labelers, detectors, providers, and sinks.
+The [minimal ReAct walkthrough](examples/minimal_react/README.md) shows all of these steps, including the parser, semantic vocabulary, and loop integration needed for a new framework.
 
 ## Repository structure
 
@@ -105,7 +112,7 @@ ToolPulse/
 │   ├── minimal_react/   # A directly editable, scripted ReAct loop
 │   └── swe_agent/       # Configuration and runner for official SWE-agent
 ├── tests/               # Unit, integration, and compatibility regression tests
-├── docs/                # Implementation guide and design documents
+├── assets/              # Project logo and concept diagram
 └── pyproject.toml       # Package metadata and dependencies
 ```
 
@@ -122,7 +129,7 @@ python -m pip install -e '.[dev]'
 python -m pytest
 ```
 
-Tests requiring SWE-agent skip when the optional host is absent. The [implementation guide](docs/implementation-guide.md) preserves the original README's architecture, API contracts, ToolFamiliar code mapping, and intentional compatibility differences.
+Tests requiring SWE-agent skip when the optional host is absent.
 
 ## License
 
