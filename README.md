@@ -93,9 +93,15 @@ The SWE-agent example defaults to interactive `human` mode without an API key. A
 
 ## Integrating another framework
 
+![ToolPulse integration components: framework-specific adapters connect agent frameworks to shared state tracking, symptom detection, and assistance; dashed elements mark extension points](assets/toolpulse_integration.svg)
+
+*ToolPulse provides a shared support layer across agent frameworks. Orange marks framework-specific parsing, semantic labeling, and host lifecycle integration; blue marks reusable state tracking, symptom detection, and assistance. Solid connections show implemented integrations, while dashed elements show extension points. Custom detectors and hint providers use the same component interfaces.*
+
 A new integration supplies an **action parser** and a **semantic labeler**, including its label vocabulary, tool-use kinds, error fingerprints, and relevant context such as file reads and edits. The minimal ReAct implementation places these components in `src/toolpulse/parsing/minimal_react.py` and `src/toolpulse/semantics/minimal_react/`.
 
 In the host loop, call `inspect_action()` before execution and `observe_step()` once for each executed action. Use `assemble_observation()` to combine the returned hints with tool feedback for the next agent input, and reset the session for a new task. The host may act on pre-check events to intercept a call or continue with a warning.
+
+These adaptations reuse ToolPulse's session state and support components. Pass a custom `detector`, `hint_provider`, or `hint_sink` to `ToolPulse(...)` to extend detection or assistance through the `Detector`, `HintProvider`, and `HintSink` [component protocols](src/toolpulse/core/protocols.py), while retaining the same host integration interfaces.
 
 The [minimal ReAct walkthrough](examples/minimal_react/README.md) shows all of these steps, including the parser, semantic vocabulary, and loop integration needed for a new framework.
 

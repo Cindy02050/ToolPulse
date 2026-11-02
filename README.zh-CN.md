@@ -93,9 +93,15 @@ SWE-agent 示例默认使用交互式 `human` 模式，无需 API key。使用�
 
 ## 接入新框架
 
+![ToolPulse 接入组件图：框架适配层连接智能体与共享的状态追踪、症状检测和辅助能力；虚线标示扩展点](assets/toolpulse_integration.svg)
+
+*ToolPulse 为不同智能体框架提供共享的支持层。橙色标示与框架相关的动作解析、语义定义和宿主生命周期接入，蓝色标示可复用的状态追踪、症状检测与辅助能力。实线连接表示已实现的接入，虚线元素表示扩展点；自定义检测器和提示生成器通过同一套组件接口接入。*
+
 新框架需要提供**动作解析器**与**语义解析器（labeler）**，包括语义标签表、工具使用类型、错误指纹，以及文件读写等相关上下文。minimal ReAct 的这些组件位于 `src/toolpulse/parsing/minimal_react.py` 和 `src/toolpulse/semantics/minimal_react/`。
 
 在宿主循环中，执行前调用 `inspect_action()`，对每次已执行动作调用一次 `observe_step()`。用 `assemble_observation()` 将返回的提示与工具反馈合并，交给智能体的下一轮输入；开始新任务时重置会话。宿主可以根据 pre 检查事件选择拦截调用或提醒后继续执行。
+
+这些适配复用 ToolPulse 的会话状态与支持组件。在 `ToolPulse(...)` 中传入自定义的 `detector`、`hint_provider` 或 `hint_sink`，即可通过 `Detector`、`HintProvider` 和 `HintSink` [组件协议](src/toolpulse/core/protocols.py)扩展检测与辅助能力，并沿用同一套宿主接入接口。
 
 [minimal ReAct 示例](examples/minimal_react/README.zh-CN.md)完整展示了这些步骤，包括接入新框架所需的 parser、语义标签表与循环接入点。
 
